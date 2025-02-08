@@ -15,7 +15,11 @@ const en = {
   saveFail: 'Failed to save the image',
   saveVault: 'Save to Vault',
   includingFilename: 'Including File Name As Title',
-  imageWidth: 'Image Width',
+  imageWidth: {
+    label: 'Default exported image width',
+    description:
+      'Set the width of the exported image in pixel. The default is 640px.',
+  },
   exportImage: 'Export to image',
   exportSelectionImage: 'Export selection to image',
   exportFolder: 'Export all notes to image',
@@ -34,6 +38,21 @@ const en = {
       label: 'Default exported image width',
       description:
         'Set the width of the exported image in pixel. The default is 640px.',
+    },
+    fontFamily: {
+      label: 'Font Style',
+      description: 'Choose between serif or sans-serif font for the exported text.',
+    },
+    highlightColor: {
+      label: 'Highlight Color',
+      description: 'Choose a highlight color for the text background.',
+      options: {
+        yellow: 'Pastel Yellow',
+        purple: 'Pastel Purple',
+        blue: 'Pastel Blue',
+        pink: 'Pastel Pink',
+        mint: 'Pastel Mint',
+      }
     },
     split: {
       title: 'Split Image',

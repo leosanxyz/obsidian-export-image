@@ -141,8 +141,11 @@ const Target = forwardRef<
               ? 'column'
               : 'column-reverse',
           backgroundColor:
-            setting.format === 'png1' ? 'unset' : 'var(--background-primary)',
+            setting.format === 'png1' ? 'unset' : '#ffffff',
           position: 'relative',
+          ['--highlight-color' as string]: setting.highlightColor || '#FFEBC2',
+          fontFamily: setting.fontFamily || 'sans-serif',
+          color: '#000000',
         }}
       >
         <Watermark {...watermarkProps}>
@@ -151,6 +154,7 @@ const Target = forwardRef<
             style={{
               width: `${setting.width}px`,
               transition: 'width 0.25s',
+              fontFamily: 'inherit',
             }}
           >
             {setting.showFilename && (

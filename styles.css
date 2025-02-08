@@ -28,6 +28,29 @@ If your plugin does not need CSS, delete this file.
   overflow: hidden;
 }
 
+/* Add highlight effect to text content */
+.export-image-root .markdown-preview-view p {
+  background-color: var(--highlight-color);
+  display: inline;
+  padding: 0.2em 0;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  line-height: 1.7;
+  color: #000000;
+  font-family: inherit;
+}
+
+/* Add spacing between paragraphs */
+.export-image-root .markdown-preview-view p + p {
+  margin-top: 1em;
+}
+
+/* Ensure text is readable */
+.export-image-root .markdown-preview-view {
+  color: #000000;
+  font-family: inherit;
+}
+
 .export-image-preview-main {
   display: flex;
   margin: 20px 0;

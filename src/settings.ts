@@ -10,6 +10,8 @@ export const DEFAULT_SETTINGS: ISettings = {
   showMetadata: false,
   recursive: false,
   quickExportSelection: false,
+  highlightColor: '#FFEBC2',  // Default highlight color (pastel yellow)
+  fontFamily: 'sans-serif',  // Default font family
   authorInfo: {
     show: false,
     align: 'right',

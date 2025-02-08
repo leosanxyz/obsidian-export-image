@@ -8,6 +8,7 @@ import { copy, save, saveAll } from '../../utils/capture';
 import L from '../../L';
 import Target, { type TargetRef } from '../common/Target';
 import FormItems from '../common/form/FormItems';
+import { HIGHLIGHT_COLORS, FONT_FAMILIES } from '../../formConfig';
 
 const formSchema: FormSchema<ISettings> = [
   {
@@ -136,6 +137,61 @@ const formSchema: FormSchema<ISettings> = [
     when: { flag: true, path: 'watermark.enable' },
   },
 ];
+
+const ColorPicker: FC<{
+  value: string;
+  onChange: (color: string) => void;
+}> = ({ value, onChange }) => {
+  return (
+    <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+      {HIGHLIGHT_COLORS.map(color => (
+        <div
+          key={color.value}
+          title={color.text}
+          onClick={() => onChange(color.value)}
+          style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '4px',
+            backgroundColor: color.value,
+            cursor: 'pointer',
+            border: value === color.value ? '2px solid var(--interactive-accent)' : '1px solid var(--background-modifier-border)',
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+const FontFamilyPicker: FC<{
+  value: 'serif' | 'sans-serif';
+  onChange: (font: 'serif' | 'sans-serif') => void;
+}> = ({ value, onChange }) => {
+  return (
+    <div style={{ marginBottom: '16px' }}>
+      <label style={{ display: 'block', marginBottom: '8px' }}>Font Style</label>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        {FONT_FAMILIES.map(font => (
+          <div
+            key={font.value}
+            title={font.text}
+            onClick={() => onChange(font.value as 'serif' | 'sans-serif')}
+            style={{
+              padding: '6px 12px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              backgroundColor: value === font.value ? 'var(--interactive-accent)' : 'var(--background-modifier-border)',
+              color: value === font.value ? 'var(--text-on-accent)' : 'var(--text-normal)',
+              fontFamily: font.value,
+            }}
+          >
+            {font.text}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const ModalContent: FC<{
   markdownEl: Node;
@@ -274,6 +330,14 @@ const ModalContent: FC<{
     <div className='export-image-preview-root'>
       <div className='export-image-preview-main'>
         <div className='export-image-preview-left'>
+          <ColorPicker
+            value={formData.highlightColor}
+            onChange={(color) => setFormData({ ...formData, highlightColor: color })}
+          />
+          <FontFamilyPicker
+            value={formData.fontFamily}
+            onChange={(font) => setFormData({ ...formData, fontFamily: font })}
+          />
           <FormItems
             formSchema={formSchema}
             update={setFormData}

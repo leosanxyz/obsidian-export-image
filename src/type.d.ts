@@ -9,6 +9,8 @@ declare type ISettings = {
   showMetadata: boolean;
   recursive: boolean;
   quickExportSelection: boolean;
+  highlightColor: string;  // Color for text highlighting
+  fontFamily: 'serif' | 'sans-serif';
   authorInfo: {
     show: boolean;
     name?: string;

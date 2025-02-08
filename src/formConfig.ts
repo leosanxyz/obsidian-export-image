@@ -6,6 +6,19 @@ import { delay } from './utils';
 // 从 type.d.ts 中引入类型
 type FileFormat = 'png0' | 'png1' | 'jpg' | 'webp' | 'pdf';
 
+export const HIGHLIGHT_COLORS = [
+  { value: '#FFEBC2', text: 'Pastel Yellow' },
+  { value: '#ECDCF8', text: 'Pastel Purple' },
+  { value: '#D0E7FD', text: 'Pastel Blue' },
+  { value: '#FADBDA', text: 'Pastel Pink' },
+  { value: '#CCF4E6', text: 'Pastel Mint' },
+];
+
+export const FONT_FAMILIES = [
+  { value: 'serif', text: 'Serif' },
+  { value: 'sans-serif', text: 'Sans Serif' },
+];
+
 export interface SettingItem<T = any> {
   id: string;
   label: string;
