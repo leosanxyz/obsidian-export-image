@@ -1,10 +1,20 @@
-/*
-
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
-
-If your plugin does not need CSS, delete this file.
-
+/* 
+  NOTA:
+  Para que el texto se redimensione de forma que "llene" el contenedor
+  independientemente del número de palabras, deberás calcular dinámicamente
+  el tamaño óptimo de fuente (por ejemplo, usando JavaScript) y asignarlo
+  a la variable CSS --calculated-font-size.
+  
+  Ejemplo en JavaScript (muy simplificado):
+  
+    const container = document.querySelector('.export-image-root .markdown-preview-view');
+    const p = container.querySelector('p');
+    // Aquí se debería medir container.clientWidth/Height, estimar cuántas líneas ocupará el texto, etc.
+    // y calcular un fontSize óptimo (en px) para que el bloque "llene" el área.
+    const optimalFontSize = calcularOptimalFontSize(container, p);
+    container.style.setProperty('--calculated-font-size', optimalFontSize + 'px');
+  
+  Sin JS, se usará el valor por defecto (40px).
 */
 
 .export-image-preview-container {
@@ -28,27 +38,109 @@ If your plugin does not need CSS, delete this file.
   overflow: hidden;
 }
 
-/* Add highlight effect to text content */
-.export-image-root .markdown-preview-view p {
-  background-color: var(--highlight-color);
-  display: inline;
-  padding: 0.2em 0;
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
-  line-height: 1.7;
-  color: #000000;
-  font-family: inherit;
-}
-
-/* Add spacing between paragraphs */
-.export-image-root .markdown-preview-view p + p {
-  margin-top: 1em;
-}
-
-/* Ensure text is readable */
+/* Container layout */
 .export-image-root .markdown-preview-view {
   color: #000000;
   font-family: inherit;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2em;
+  text-align: left;
+}
+
+/* Title styling - fixed at top */
+.export-image-root .inline-title {
+  /* Tamaño del título: base multiplicada x1.5 (por defecto 1.5 * 24px = 36px) */
+  font-size: calc(1.5 * var(--base-title-size, 24px));
+  padding: 1em;
+  background-color: white;
+  border-bottom: 1px solid var(--background-modifier-border);
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+/* Content container */
+.export-image-root .markdown-preview-view > div:not(.inline-title) {
+  margin-top: 80px; /* Espacio reservado para el título */
+  padding: 2em 4em;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centramos el contenedor */
+  justify-content: center;
+  min-height: calc(100% - 80px);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* Texto del contenido */
+.export-image-root .markdown-preview-view p {
+  display: block;
+  color: #000000;
+  font-family: inherit;
+  font-size: var(--calculated-font-size, 40px);
+  max-width: 100%;
+  margin: 0;
+  text-align: left !important; /* Forzamos alineación izquierda */
+  width: 100%; /* Usamos todo el ancho disponible */
+  height: fit-content;
+  line-height: 1.7;
+  padding: 0;
+}
+
+/* Highlight por línea */
+.export-image-root .markdown-preview-view p .highlight-line {
+  background-color: var(--highlight-color);
+  display: inline;
+  padding: 0.2em 0.4em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  white-space: pre-wrap;
+  line-height: 1.7;
+  text-align: left !important; /* Forzamos alineación izquierda */
+}
+
+/* Aseguramos que los saltos de línea funcionen */
+.export-image-root .markdown-preview-view p br {
+  display: block;
+  content: "";
+  margin-top: 0.3em;
+  width: 100%; /* Aseguramos que el salto de línea ocupe todo el ancho */
+}
+
+/* Espaciado entre párrafos */
+.export-image-root .markdown-preview-view p + p {
+  margin-top: 1.5em;
+}
+
+/* (El resto de las reglas se mantienen sin cambios) */
+
+.export-image-root .markdown-preview-view {
+  color: #000000;
+  font-family: inherit;
+  padding: 2em;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  text-align: left;
+}
+
+.export-image-root .metadata-container {
+  padding: 0 0.4em;
+  margin-bottom: 1em;
 }
 
 .export-image-preview-main {
@@ -80,7 +172,6 @@ If your plugin does not need CSS, delete this file.
   .export-image-preview-left {
     width: 100%;
   }
-
   .export-image-preview-right {
     width: 100%;
   }
@@ -264,4 +355,62 @@ If your plugin does not need CSS, delete this file.
   top: 9999px;
   width: auto;
   height: auto;
+}
+
+/* Form items styling */
+.export-image-root .form-items-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: transparent !important;
+}
+
+.export-image-root .form-items-container > * {
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+/* Remove ALL form item styling */
+.export-image-root .setting-item,
+.export-image-root .setting-item-info,
+.export-image-root .setting-item-control,
+.export-image-root .setting-item-name,
+.export-image-root .setting-item-description,
+.export-image-root .setting-editor-extra-setting-button,
+.export-image-root .setting-item-control input[type="text"],
+.export-image-root .setting-item-control input[type="number"],
+.export-image-root .setting-item-control select,
+.export-image-root .setting-item-control button {
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* Ensure all settings containers are transparent */
+.export-image-root .setting-item,
+.export-image-root .setting-editor-extra-setting-button {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Additional specific overrides for section 2 */
+.export-image-root .setting-item-control,
+.export-image-root .setting-item-info,
+.export-image-root .setting-editor-extra-setting-button {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Override any remaining background colors */
+.export-image-root .setting-item *,
+.export-image-root .form-items-container * {
+  background-color: transparent !important;
 }

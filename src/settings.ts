@@ -2,7 +2,8 @@ import { isCreatable } from './imageFormatTester';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const DEFAULT_SETTINGS: ISettings = {
-  width: 640,
+  width: 1920,
+  height: 1080,  // Add default height
   showFilename: true,
   // eslint-disable-next-line @typescript-eslint/naming-convention
   '2x': true,

@@ -21,6 +21,59 @@ export interface TargetRef {
   resetClip: () => void;
 }
 
+// Función para ajustar el texto al contenedor
+const fitTextToContainer = (textElement: HTMLElement, containerElement: HTMLElement, aspectRatio: number) => {
+  if (!textElement || !containerElement) return;
+
+  const containerWidth = containerElement.clientWidth;
+  const containerHeight = containerElement.clientHeight;
+  
+  // Ajustamos el padding vertical según la proporción
+  const horizontalPadding = 80; // 40px en cada lado
+  let verticalPadding;
+  if (aspectRatio >= 16/9) { // 16:9
+    verticalPadding = 60;
+  } else if (aspectRatio === 1) { // 1:1
+    verticalPadding = 140; // Aumentamos el padding vertical para 1:1
+  } else { // 9:16
+    verticalPadding = 120;
+  }
+  
+  const availableWidth = containerWidth - horizontalPadding;
+  const availableHeight = containerHeight - verticalPadding;
+
+  // Empezamos con un tamaño base
+  let fontSize = aspectRatio >= 16/9 ? 40 : 50;
+  textElement.style.fontSize = `${fontSize}px`;
+
+  // Ajustamos el tamaño hasta que el texto quepa en el contenedor
+  while (
+    (textElement.scrollWidth > availableWidth || textElement.scrollHeight > availableHeight) 
+    && fontSize > 8
+  ) {
+    fontSize -= 1;
+    textElement.style.fontSize = `${fontSize}px`;
+  }
+
+  // Si el texto es muy pequeño, intentamos aumentarlo
+  while (
+    textElement.scrollWidth < availableWidth * 0.95 
+    && textElement.scrollHeight < availableHeight * 0.95 
+    && fontSize < 200
+  ) {
+    fontSize += 1;
+    textElement.style.fontSize = `${fontSize}px`;
+    if (textElement.scrollWidth > availableWidth || textElement.scrollHeight > availableHeight) {
+      fontSize -= 1;
+      textElement.style.fontSize = `${fontSize}px`;
+      break;
+    }
+  }
+
+  // Actualizamos la variable CSS
+  textElement.style.setProperty('--calculated-font-size', `${fontSize}px`);
+};
+
 const Target = forwardRef<
   TargetRef,
   {
@@ -39,6 +92,93 @@ const Target = forwardRef<
   const rootRef = useRef<HTMLDivElement>(null);
   const clipRef = useRef<HTMLDivElement>(null);
   const [rootHeight, setRootHeight] = useState(0);
+
+  // Efecto para ajustar el texto cuando cambia el contenido o el tamaño
+  useEffect(() => {
+    if (!contentRef.current) return;
+    
+    // Limpiamos y agregamos el nuevo contenido
+    contentRef.current.innerHTML = '';
+    contentRef.current.append(markdownEl.cloneNode(true));
+    
+    // Calculamos la proporción actual
+    const aspectRatio = setting.width / setting.height;
+    
+    // Buscamos todos los párrafos para ajustar su tamaño
+    const paragraphs = contentRef.current.querySelectorAll('p');
+    const container = contentRef.current.closest('.markdown-preview-view');
+    
+    if (container) {
+      paragraphs.forEach(p => {
+        // Creamos un div contenedor para alinear el texto
+        const textContainer = document.createElement('div');
+        textContainer.style.width = '100%';
+        textContainer.style.display = 'flex';
+        textContainer.style.flexDirection = 'column';
+        textContainer.style.alignItems = 'flex-start';
+        p.parentNode?.insertBefore(textContainer, p);
+        textContainer.appendChild(p);
+        
+        // Dividimos el texto en palabras
+        const text = p.textContent || '';
+        const words = text.split(' ');
+        p.innerHTML = ''; // Limpiamos el contenido actual
+        
+        let currentLine = document.createElement('span');
+        currentLine.className = 'highlight-line';
+        
+        // Creamos un span temporal para medir el ancho
+        const tempSpan = document.createElement('span');
+        tempSpan.style.visibility = 'hidden';
+        tempSpan.style.position = 'absolute';
+        p.appendChild(tempSpan);
+        
+        words.forEach((word, i) => {
+          const prevContent = currentLine.textContent || '';
+          const testContent = prevContent ? prevContent + ' ' + word : word;
+          tempSpan.textContent = testContent;
+          
+          // Si la palabra hace que la línea sea demasiado larga, creamos una nueva línea
+          if (tempSpan.offsetWidth > container.clientWidth * 0.75 && prevContent) {
+            p.appendChild(currentLine);
+            p.appendChild(document.createElement('br'));
+            currentLine = document.createElement('span');
+            currentLine.className = 'highlight-line';
+            currentLine.textContent = word;
+          } else {
+            currentLine.textContent = testContent;
+          }
+          
+          // Si es la última palabra, agregamos la línea actual
+          if (i === words.length - 1) {
+            p.appendChild(currentLine);
+          }
+        });
+        
+        // Removemos el span temporal
+        tempSpan.remove();
+        
+        fitTextToContainer(p as HTMLElement, container as HTMLElement, aspectRatio);
+      });
+    }
+
+    // Observador para ajustar el texto cuando cambie el tamaño del contenedor
+    const resizeObserver = new ResizeObserver(() => {
+      if (container) {
+        paragraphs.forEach(p => {
+          fitTextToContainer(p as HTMLElement, container as HTMLElement, aspectRatio);
+        });
+      }
+    });
+
+    if (container) {
+      resizeObserver.observe(container);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [markdownEl, setting.width, setting.height]);
 
   useEffect(() => {
     if (!rootRef.current) return;
@@ -80,29 +220,6 @@ const Target = forwardRef<
   } as const), [scale]);
 
   useEffect(() => {
-    if (!contentRef.current) return;
-    contentRef.current.innerHTML = '';
-    contentRef.current.append(markdownEl.cloneNode(true));
-  }, [markdownEl]);
-
-  useImperativeHandle(ref, () => ({
-    element: clipRef.current!,
-    contentElement: rootRef.current!,
-    setClip: (startY: number, height: number) => {
-      if (!clipRef.current || !rootRef.current) return;
-      clipRef.current.style.height = `${height}px`;
-      clipRef.current.style.overflow = 'hidden';
-      rootRef.current.style.transform = `translateY(-${startY}px)`;
-    },
-    resetClip: () => {
-      if (!clipRef.current || !rootRef.current) return;
-      clipRef.current.style.height = '';
-      clipRef.current.style.overflow = '';
-      rootRef.current.style.transform = '';
-    }
-  }), [clipRef.current, rootRef.current]);
-
-  useEffect(() => {
     (async () => {
       const props: WatermarkProps = {
         monitor: false,
@@ -129,6 +246,23 @@ const Target = forwardRef<
     })();
   }, [setting]);
 
+  useImperativeHandle(ref, () => ({
+    element: clipRef.current!,
+    contentElement: rootRef.current!,
+    setClip: (startY: number, height: number) => {
+      if (!clipRef.current || !rootRef.current) return;
+      clipRef.current.style.height = `${height}px`;
+      clipRef.current.style.overflow = 'hidden';
+      rootRef.current.style.transform = `translateY(-${startY}px)`;
+    },
+    resetClip: () => {
+      if (!clipRef.current || !rootRef.current) return;
+      clipRef.current.style.height = '';
+      clipRef.current.style.overflow = '';
+      rootRef.current.style.transform = '';
+    }
+  }), [clipRef.current, rootRef.current]);
+
   return (
     <div ref={clipRef}>
       <div
@@ -153,8 +287,11 @@ const Target = forwardRef<
             className='markdown-preview-view markdown-rendered export-image-preview-container'
             style={{
               width: `${setting.width}px`,
-              transition: 'width 0.25s',
+              height: `${setting.height}px`,
+              transition: 'width 0.25s, height 0.25s',
               fontFamily: 'inherit',
+              overflow: 'hidden',
+              position: 'relative',
             }}
           >
             {setting.showFilename && (

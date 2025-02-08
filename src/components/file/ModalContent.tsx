@@ -10,16 +10,17 @@ import Target, { type TargetRef } from '../common/Target';
 import FormItems from '../common/form/FormItems';
 import { HIGHLIGHT_COLORS, FONT_FAMILIES } from '../../formConfig';
 
+const ASPECT_RATIOS = [
+  { width: 1920, height: 1080, label: '16:9', icon: '⬜' },
+  { width: 1080, height: 1920, label: '9:16', icon: '⬛' },
+  { width: 1080, height: 1080, label: '1:1', icon: '🟥' },
+];
+
 const formSchema: FormSchema<ISettings> = [
   {
     label: L.includingFilename(),
     path: 'showFilename',
     type: 'boolean',
-  },
-  {
-    label: L.imageWidth(),
-    path: 'width',
-    type: 'number',
   },
   {
     path: 'split.enable',
@@ -193,6 +194,82 @@ const FontFamilyPicker: FC<{
   );
 };
 
+const FontSizeSlider: FC<{
+  value: number;
+  onChange: (size: number) => void;
+}> = ({ value, onChange }) => {
+  return (
+    <div style={{ marginBottom: '16px' }}>
+      <label style={{ display: 'block', marginBottom: '8px' }}>Font Size Base: {value}px</label>
+      <input
+        type="range"
+        min="8"
+        max="48"
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{ width: '100%' }}
+      />
+    </div>
+  );
+};
+
+const SettingsGroup: FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div style={{ 
+    border: '1px solid var(--background-modifier-border)',
+    borderRadius: '8px',
+    padding: '16px',
+    marginBottom: '16px',
+    backgroundColor: 'var(--background-primary)',
+  }}>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      gap: '16px'
+    }}>
+      {children}
+    </div>
+  </div>
+);
+
+const AspectRatioPicker: FC<{
+  value: { width: number; height: number };
+  onChange: (dimensions: { width: number; height: number }) => void;
+}> = ({ value, onChange }) => {
+  return (
+    <div style={{ marginBottom: '16px' }}>
+      <label style={{ display: 'block', marginBottom: '8px' }}>Image Size</label>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        {ASPECT_RATIOS.map(ratio => (
+          <div
+            key={ratio.label}
+            title={`${ratio.width}x${ratio.height}`}
+            onClick={() => onChange(ratio)}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              backgroundColor: 
+                value.width === ratio.width && value.height === ratio.height 
+                  ? 'var(--interactive-accent)' 
+                  : 'var(--background-modifier-border)',
+              color: 
+                value.width === ratio.width && value.height === ratio.height
+                  ? 'var(--text-on-accent)' 
+                  : 'var(--text-normal)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <span>{ratio.icon}</span>
+            <span>{ratio.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const ModalContent: FC<{
   markdownEl: Node;
   settings: ISettings;
@@ -201,14 +278,15 @@ const ModalContent: FC<{
   app: App;
   metadataMap: Record<string, { type: MetadataType }>;
 }> = ({ markdownEl, settings, app, frontmatter, title, metadataMap }) => {
-  const [formData, setFormData] = useState<ISettings>(settings);
+  const [formData, setFormData] = useState<ISettings>({
+    ...settings,
+    width: settings.width || 1920,
+    height: settings.height || 1080,
+  });
   const [isGrabbing, setIsGrabbing] = useState(false);
   const previewOutRef = useRef<HTMLDivElement>(null);
   const mainHeight = Math.min(764, (window.innerHeight * 0.85) - 225);
   const root = useRef<TargetRef>(null);
-  useEffect(() => {
-    setFormData(settings);
-  }, [settings]);
   const [processing, setProcessing] = useState(false);
   const [allowCopy, setAllowCopy] = useState(true);
   const [rootHeight, setRootHeight] = useState(0);
@@ -229,6 +307,10 @@ const ModalContent: FC<{
   }, [mainHeight]);
 
   useEffect(() => {
+    setFormData(settings);
+  }, [settings]);
+
+  useEffect(() => {
     if (!root.current?.element || processing) {
       return;
     }
@@ -245,6 +327,7 @@ const ModalContent: FC<{
       observer.disconnect();
     };
   }, [root.current?.element, processing]);
+
   useEffect(() => {
     if (formData.split.enable) {
       const firstPage = formData.split.height;
@@ -330,20 +413,30 @@ const ModalContent: FC<{
     <div className='export-image-preview-root'>
       <div className='export-image-preview-main'>
         <div className='export-image-preview-left'>
-          <ColorPicker
-            value={formData.highlightColor}
-            onChange={(color) => setFormData({ ...formData, highlightColor: color })}
-          />
-          <FontFamilyPicker
-            value={formData.fontFamily}
-            onChange={(font) => setFormData({ ...formData, fontFamily: font })}
-          />
-          <FormItems
-            formSchema={formSchema}
-            update={setFormData}
-            settings={formData}
-            app={app}
-          />
+          <SettingsGroup>
+            <ColorPicker
+              value={formData.highlightColor}
+              onChange={(color) => setFormData({ ...formData, highlightColor: color })}
+            />
+            <FontFamilyPicker
+              value={formData.fontFamily}
+              onChange={(font) => setFormData({ ...formData, fontFamily: font })}
+            />
+            <AspectRatioPicker
+              value={{ width: formData.width, height: formData.height }}
+              onChange={({ width, height }) => setFormData({ ...formData, width, height })}
+            />
+          </SettingsGroup>
+          <SettingsGroup>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <FormItems
+                formSchema={formSchema}
+                update={setFormData}
+                settings={formData}
+                app={app}
+              />
+            </div>
+          </SettingsGroup>
           {formData.split.enable && <div className='info-text'>
             {L.splitInfo({ rootHeight, splitHeight: formData.split.height, pages })}
           </div>}

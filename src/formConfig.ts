@@ -36,13 +36,6 @@ export const createSettingConfig = async (app: App): Promise<SettingItem[]> => {
   await delay(50);
   return [
     {
-      id: 'width',
-      label: L.setting.imageWidth.label(),
-      description: L.setting.imageWidth.description(),
-      type: 'number',
-      placeholder: '640',
-    },
-    {
       id: 'split.enable',
       label: L.setting.split.enable.label(),
       description: L.setting.split.enable.description(),
@@ -73,12 +66,6 @@ export const createSettingConfig = async (app: App): Promise<SettingItem[]> => {
     {
       id: 'showMetadata',
       label: L.setting.metadata.label(),
-      type: 'toggle',
-    },
-    {
-      id: '2x',
-      label: L.setting['2x'].label(),
-      description: L.setting['2x'].description(),
       type: 'toggle',
     },
     {
